@@ -147,11 +147,11 @@ mvn spring-boot:run -Dspring-boot.run.profiles=mysql</pre>
     <pre># 1) 登录拿 token
 curl -s -X POST http://localhost:8080/api/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"username":"admin","password":"***"}'
+  -d '{"username":"admin","password":"admin123"}'
 
 # 2) 带 token 检索员工
 curl -s "http://localhost:8080/api/employees?page=1&size=5&keyword=张" \
-  -H "Authorization: Bearer ***"</pre>
+  -H "Authorization: Bearer &lt;token&gt;"</pre>
     <p class="muted" style="margin-top:10px">「在线体验」标签页可以直接在浏览器里调这些接口，不用敲 curl。</p>
   </section>
 
@@ -160,7 +160,7 @@ curl -s "http://localhost:8080/api/employees?page=1&size=5&keyword=张" \
     <div class="card">
       <div class="row">
         <div class="field"><label>用户名</label><input id="u" value="admin" autocomplete="username"/></div>
-        <div class="field"><label>密码</label><input id="p" type="password" value="***" autocomplete="current-password"/></div>
+        <div class="field"><label>密码</label><input id="p" type="password" value="admin123" autocomplete="current-password"/></div>
         <button class="btn primary" id="btnLogin">登录</button>
         <button class="btn" id="btnLogout">退出</button>
         <span class="status" style="margin-left:auto">
