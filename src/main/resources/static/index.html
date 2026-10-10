@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Employee Admin · 企业管理后台</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --elev:#f1f3f6; --text:#1c2024; --muted:#6b7280;
+    --border:#e3e6ea; --border-strong:#cfd4da; --accent:#2f5fd0; --accent-soft:#e8eefe;
+    --ok:#137a4a; --warn:#a15c00; --danger:#b4232a; --radius:12px;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0f1115; --card:#161a20; --elev:#1d222a; --text:#e7eaf0; --muted:#9aa3b2;
+           --border:#262c36; --border-strong:#39414d; --accent:#6d93ff; --accent-soft:#1b2540; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+       font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  a{color:var(--accent)}
+  .wrap{max-width:1120px;margin:0 auto;padding:24px 18px 64px}
+  header.top{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;
+             padding:20px 22px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius)}
+  .brand h1{margin:0;font-size:21px;letter-spacing:.2px}
+  .brand p{margin:4px 0 0;color:var(--muted);font-size:13px}
+  .links{display:flex;gap:8px;flex-wrap:wrap}
+  .links a{display:inline-block;padding:7px 12px;border:1px solid var(--border-strong);border-radius:999px;
+           text-decoration:none;font-size:12.5px;color:var(--text);background:var(--elev)}
+  .links a:hover{border-color:var(--accent);color:var(--accent)}
+  nav.tabs{display:flex;gap:6px;margin:18px 0 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+  nav.tabs button{appearance:none;background:none;border:none;padding:10px 14px;cursor:pointer;
+                  font:inherit;font-size:13.5px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+  nav.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+  section.panel{display:none;margin-top:20px}
+  section.panel.active{display:block}
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px}
+  .card h3{margin:0 0 6px;font-size:14.5px}
+  .card p{margin:0;color:var(--muted);font-size:13px}
+  .badges{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
+  .badge{padding:4px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);
+         font-size:12px;border:1px solid transparent}
+  pre{background:var(--elev);border:1px solid var(--border);border-radius:10px;padding:13px 15px;overflow:auto;
+      font-family:var(--mono);font-size:12.5px;margin:10px 0 0}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+  tbody tr:hover{background:var(--elev)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .field{display:flex;flex-direction:column;gap:4px}
+  .field label{font-size:12px;color:var(--muted)}
+  input,select{font:inherit;font-size:13px;padding:7px 9px;border:1px solid var(--border-strong);
+               border-radius:8px;background:var(--card);color:var(--text);min-width:120px}
+  button.btn{font:inherit;font-size:13px;padding:8px 14px;border-radius:8px;border:1px solid var(--border-strong);
+             background:var(--elev);color:var(--text);cursor:pointer}
+  button.btn:hover{border-color:var(--accent)}
+  button.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  button.btn.danger{color:var(--danger);border-color:var(--border-strong)}
+  button.btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn-mini{padding:4px 9px;font-size:12px}
+  .muted{color:var(--muted)}
+  .pill{padding:2px 8px;border-radius:999px;font-size:11.5px;border:1px solid var(--border-strong)}
+  .pill.on{color:var(--ok);border-color:var(--ok)}
+  .pill.off{color:var(--muted)}
+  .status{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--muted)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--border-strong)}
+  .dot.ok{background:var(--ok)} .dot.bad{background:var(--danger)}
+  .log{background:var(--elev);border:1px solid var(--border);border-radius:10px;padding:11px 13px;
+       font-family:var(--mono);font-size:12px;max-height:260px;overflow:auto;white-space:pre-wrap;color:var(--muted)}
+  .toast{position:fixed;right:18px;bottom:18px;background:var(--text);color:var(--bg);padding:10px 15px;
+         border-radius:10px;font-size:13px;opacity:0;transform:translateY(8px);transition:.22s;pointer-events:none;z-index:50}
+  .toast.show{opacity:1;transform:none}
+  dialog{border:1px solid var(--border-strong);border-radius:var(--radius);background:var(--card);
+         color:var(--text);padding:0;width:min(520px,92vw)}
+  dialog::backdrop{background:rgba(0,0,0,.45)}
+  dialog .dlg-body{padding:18px 20px}
+  dialog h3{margin:0 0 14px;font-size:16px}
+  .dlg-grid{display:grid;gap:11px;grid-template-columns:1fr 1fr}
+  .dlg-grid .full{grid-column:1/-1}
+  .dlg-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px}
+  .tag{font-family:var(--mono);font-size:11.5px;font-weight:700}
+  .tag.get{color:var(--ok)} .tag.post{color:var(--accent)} .tag.put{color:var(--warn)} .tag.del{color:var(--danger)}
+  h2.sec{font-size:15px;margin:26px 0 10px}
+  h2.sec:first-child{margin-top:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <h1>Employee Admin · 企业管理后台</h1>
+      <p>Spring Boot 3 + JWT 鉴权 + 员工 CRUD + 分页检索 + Swagger 文档</p>
+    </div>
+    <div class="links">
+      <a href="/swagger-ui.html" target="_blank" rel="noopener">Swagger UI</a>
+      <a href="/h2-console" target="_blank" rel="noopener">H2 控制台</a>
+      <a href="/v3/api-docs" target="_blank" rel="noopener">OpenAPI JSON</a>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true"  data-panel="p-overview">概览</button>
+    <button role="tab" aria-selected="false" data-panel="p-demo">在线体验</button>
+    <button role="tab" aria-selected="false" data-panel="p-api">接口清单</button>
+  </nav>
+
+  <!-- ================= 概览 ================= -->
+  <section class="panel active" id="p-overview">
+    <h2 class="sec">项目亮点</h2>
+    <div class="grid">
+      <div class="card"><h3>🔐 无状态 JWT 鉴权</h3><p>登录签发 JWT，过滤器校验；未认证 401、无权限 403，语义清晰可区分。</p></div>
+      <div class="card"><h3>🧩 员工 CRUD</h3><p>新增 / 修改 / 删除 / 详情，删除操作通过 <code>@PreAuthorize</code> 限定 <code>ROLE_ADMIN</code>。</p></div>
+      <div class="card"><h3>🔎 组合检索 + 分页</h3><p>关键字、部门、在职状态任意组合，支持排序，返回统一分页结构。</p></div>
+      <div class="card"><h3>✅ 参数校验</h3><p>Jakarta Bean Validation + 全局异常处理，错误响应不泄露堆栈。</p></div>
+      <div class="card"><h3>📘 Swagger 文档</h3><p>springdoc-openapi 自动生成在线文档，可直接调试。</p></div>
+      <div class="card"><h3>🗄️ 双 Profile</h3><p><code>demo</code> 用 H2 内存库免配置启动；<code>mysql</code> 切换生产库。</p></div>
+    </div>
+
+    <h2 class="sec">技术栈</h2>
+    <div class="badges">
+      <span class="badge">Java 17</span><span class="badge">Spring Boot 3.3.4</span>
+      <span class="badge">Spring Security 6</span><span class="badge">JWT · jjwt 0.12.6</span>
+      <span class="badge">Spring Data JPA</span><span class="badge">Hibernate 6</span>
+      <span class="badge">H2 / MySQL 8</span><span class="badge">springdoc-openapi</span>
+      <span class="badge">Lombok</span><span class="badge">Bean Validation</span>
+    </div>
+
+    <h2 class="sec">快速开始</h2>
+    <pre># 克隆后直接运行（demo profile，H2 内存库，无需 MySQL）
+mvn spring-boot:run
+
+# 打开本页
+open http://localhost:8080/
+# Swagger UI : http://localhost:8080/swagger-ui.html
+# H2 控制台  : http://localhost:8080/h2-console
+
+# 演示账号
+admin / admin123     (ROLE_ADMIN，可删除)
+
+# 换 MySQL 跑
+export DB_HOST=127.0.0.1 DB_NAME=employee_admin DB_USER=root DB_PASSWORD=你的密码
+mvn spring-boot:run -Dspring-boot.run.profiles=mysql</pre>
+
+    <h2 class="sec">命令行调用示例</h2>
+    <pre># 1) 登录拿 token
+curl -s -X POST http://localhost:8080/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"admin","password":"***"}'
+
+# 2) 带 token 检索员工
+curl -s "http://localhost:8080/api/employees?page=1&size=5&keyword=张" \
+  -H "Authorization: Bearer ***"</pre>
+    <p class="muted" style="margin-top:10px">「在线体验」标签页可以直接在浏览器里调这些接口，不用敲 curl。</p>
+  </section>
+
+  <!-- ================= 在线体验 ================= -->
+  <section class="panel" id="p-demo">
+    <div class="card">
+      <div class="row">
+        <div class="field"><label>用户名</label><input id="u" value="admin" autocomplete="username"/></div>
+        <div class="field"><label>密码</label><input id="p" type="password" value="***" autocomplete="current-password"/></div>
+        <button class="btn primary" id="btnLogin">登录</button>
+        <button class="btn" id="btnLogout">退出</button>
+        <span class="status" style="margin-left:auto">
+          <span class="dot" id="dot"></span><span id="who">未登录</span>
+        </span>
+      </div>
+    </div>
+
+    <h2 class="sec">员工列表</h2>
+    <div class="card">
+      <div class="row">
+        <div class="field"><label>关键字</label><input id="q_keyword" placeholder="姓名/职位…"/></div>
+        <div class="field"><label>部门</label><input id="q_dept" placeholder="如 研发部"/></div>
+        <div class="field"><label>在职状态</label>
+          <select id="q_active">
+            <option value="">全部</option><option value="true">在职</option><option value="false">离职</option>
+          </select>
+        </div>
+        <div class="field"><label>每页</label>
+          <select id="q_size"><option>5</option><option selected>10</option><option>20</option></select>
+        </div>
+        <button class="btn" id="btnQuery">查询</button>
+        <button class="btn" id="btnReset">重置</button>
+        <button class="btn primary" id="btnNew" style="margin-left:auto">＋ 新增员工</button>
+      </div>
+      <div style="overflow:auto;margin-top:14px">
+        <table>
+          <thead><tr>
+            <th>ID</th><th>姓名</th><th>部门</th><th>职位</th><th>邮箱</th><th>电话</th>
+            <th>薪资</th><th>入职</th><th>状态</th><th style="width:120px">操作</th>
+          </tr></thead>
+          <tbody id="rows"><tr><td colspan="10" class="muted">登录后点击「查询」加载数据。</td></tr></tbody>
+        </table>
+      </div>
+      <div class="row" style="margin-top:12px;align-items:center">
+        <span class="muted" id="pageInfo">—</span>
+        <button class="btn btn-mini" id="btnPrev" style="margin-left:auto">上一页</button>
+        <button class="btn btn-mini" id="btnNext">下一页</button>
+      </div>
+    </div>
+
+    <h2 class="sec">最近请求日志</h2>
+    <div class="log" id="log">（等待操作…）</div>
+  </section>
+
+  <!-- ================= 接口清单 ================= -->
+  <section class="panel" id="p-api">
+    <div class="card">
+      <div style="overflow:auto">
+        <table>
+          <thead><tr><th style="width:70px">方法</th><th style="width:290px">路径</th><th style="width:130px">权限</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td class="tag post">POST</td><td><code>/api/auth/login</code></td><td>公开</td><td>登录并返回 JWT</td></tr>
+            <tr><td class="tag get">GET</td><td><code>/api/employees</code></td><td>需登录</td><td>分页检索（keyword / department / active / sort）</td></tr>
+            <tr><td class="tag get">GET</td><td><code>/api/employees/{id}</code></td><td>需登录</td><td>员工详情</td></tr>
+            <tr><td class="tag post">POST</td><td><code>/api/employees</code></td><td>需登录</td><td>新增员工</td></tr>
+            <tr><td class="tag put">PUT</td><td><code>/api/employees/{id}</code></td><td>需登录</td><td>修改员工</td></tr>
+            <tr><td class="tag del">DELETE</td><td><code>/api/employees/{id}</code></td><td><b>仅 ADMIN</b></td><td>删除员工</td></tr>
+            <tr><td class="tag get">GET</td><td><code>/swagger-ui.html</code></td><td>公开</td><td>Swagger UI 文档</td></tr>
+            <tr><td class="tag get">GET</td><td><code>/h2-console</code></td><td>公开</td><td>H2 数据库控制台（demo）</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="muted" style="margin-top:12px">
+        统一响应体 <code>{"code":0,"message":"ok","data":…}</code>；分页数据形如
+        <code>{"list":[…],"total":6,"page":1,"size":10}</code>。
+        鉴权头：<code>Authorization: Bearer &lt;token&gt;</code>（有效期 120 分钟）。
+      </p>
+    </div>
+  </section>
+</div>
+
+<dialog id="dlg">
+  <form method="dialog" class="dlg-body" id="dlgForm">
+    <h3 id="dlgTitle">新增员工</h3>
+    <div class="dlg-grid">
+      <div class="field full"><label>姓名 *</label><input id="f_name" required maxlength="64"/></div>
+      <div class="field"><label>部门 *</label><input id="f_dept" required maxlength="32"/></div>
+      <div class="field"><label>职位</label><input id="f_pos" maxlength="64"/></div>
+      <div class="field"><label>邮箱</label><input id="f_email" type="email" maxlength="128"/></div>
+      <div class="field"><label>电话</label><input id="f_phone" maxlength="32"/></div>
+      <div class="field"><label>薪资</label><input id="f_salary" type="number" step="0.01" min="0"/></div>
+      <div class="field"><label>入职日期</label><input id="f_hire" type="date"/></div>
+      <div class="field full"><label>在职</label>
+        <select id="f_active"><option value="true" selected>在职</option><option value="false">离职</option></select>
+      </div>
+    </div>
+    <div class="dlg-actions">
+      <button class="btn" value="cancel">取消</button>
+      <button class="btn primary" value="ok" id="dlgOk">保存</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  var token = null, pageNo = 1, total = 0, editingId = null;
+
+  var $ = function(id){ return document.getElementById(id); };
+  function toast(msg, bad){
+    var t = $('toast'); t.textContent = msg;
+    t.style.background = bad ? 'var(--danger)' : 'var(--text)';
+    t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); }, 2200);
+  }
+  function log(title, obj){
+    var el = $('log');
+    var time = new Date().toLocaleTimeString();
+    el.textContent = '[' + time + '] ' + title + '\n' + JSON.stringify(obj, null, 2) + '\n\n' + el.textContent;
+  }
+  function setStatus(ok, text){
+    $('dot').className = 'dot ' + (ok ? 'ok' : (token ? 'bad' : ''));
+    $('who').textContent = text;
+  }
+
+  // ---- tabs ----
+  var tabs = document.querySelectorAll('nav.tabs button');
+  for (var i=0;i<tabs.length;i++){
+    tabs[i].addEventListener('click', function(){
+      for (var j=0;j<tabs.length;j++){ tabs[j].setAttribute('aria-selected','false'); }
+      this.setAttribute('aria-selected','true');
+      var panels = document.querySelectorAll('section.panel');
+      for (var k=0;k<panels.length;k++){ panels[k].classList.remove('active'); }
+      $(this.getAttribute('data-panel')).classList.add('active');
+    });
+  }
+
+  // ---- api helper ----
+  function api(method, path, body, noAuth){
+    var headers = { 'Accept':'application/json' };
+    if (body !== undefined && body !== null) headers['Content-Type'] = 'application/json';
+    if (token && !noAuth) headers['Authorization'] = 'Bearer ' + token;
+    var opts = { method: method, headers: headers };
+    if (body !== undefined && body !== null) opts.body = JSON.stringify(body);
+    return fetch(path, opts).then(function(r){
+      return r.text().then(function(txt){
+        var data; try { data = txt ? JSON.parse(txt) : null; } catch(e){ data = txt; }
+        log(method + ' ' + path + '  → HTTP ' + r.status, data);
+        if (r.status === 401){ token = null; setStatus(false, '登录已失效'); }
+        return { status: r.status, ok: r.ok, data: data };
+      });
+    });
+  }
+
+  // ---- login ----
+  $('btnLogin').addEventListener('click', function(){
+    api('POST','/api/auth/login', { username: $('u').value.trim(), password: $('p').value }, true)
+      .then(function(res){
+        if (res.status === 200 && res.data && res.data.code === 0){
+          token = res.data.data.token;
+          setStatus(true, res.data.data.username + ' · ' + res.data.data.role);
+          toast('登录成功');
+          pageNo = 1; load();
+        } else {
+          setStatus(false, '登录失败');
+          toast((res.data && res.data.message) || '登录失败', true);
+        }
+      });
+  });
+  $('btnLogout').addEventListener('click', function(){
+    token = null; setStatus(false,'未登录'); $('rows').innerHTML='<tr><td colspan="10" class="muted">已退出。</td></tr>';
+    $('pageInfo').textContent = '—'; toast('已退出');
+  });
+
+  // ---- list ----
+  function load(){
+    if (!token){ toast('请先登录', true); return; }
+    var qs = 'page=' + pageNo + '&size=' + ($('q_size').value||10);
+    var kw = $('q_keyword').value.trim(), dp = $('q_dept').value.trim(), ac = $('q_active').value;
+    if (kw) qs += '&keyword=' + encodeURIComponent(kw);
+    if (dp) qs += '&department=' + encodeURIComponent(dp);
+    if (ac) qs += '&active=' + ac;
+
+    api('GET','/api/employees?' + qs).then(function(res){
+      var body = res.data;
+      if (!body || body.code !== 0){
+        $('rows').innerHTML = '<tr><td colspan="10" class="muted">加载失败：' + ((body&&body.message)||'未知错误') + '</td></tr>';
+        return;
+      }
+      var d = body.data, list = (d && d.list) || [];
+      total = (d && d.total) || 0;
+      if (!list.length){ $('rows').innerHTML = '<tr><td colspan="10" class="muted">没有匹配的数据。</td></tr>'; }
+      else {
+        $('rows').innerHTML = list.map(function(e){
+          return '<tr>' +
+            '<td>' + e.id + '</td>' +
+            '<td><b>' + esc(e.name) + '</b></td>' +
+            '<td>' + esc(e.department) + '</td>' +
+            '<td>' + esc(e.position || '-') + '</td>' +
+            '<td class="muted">' + esc(e.email || '-') + '</td>' +
+            '<td class="muted">' + esc(e.phone || '-') + '</td>' +
+            '<td>' + (e.salary != null ? e.salary : '-') + '</td>' +
+            '<td class="muted">' + (e.hireDate || '-') + '</td>' +
+            '<td><span class="pill ' + (e.active ? 'on' : 'off') + '">' + (e.active ? '在职' : '离职') + '</span></td>' +
+            '<td>' +
+              '<button class="btn btn-mini" data-edit="' + e.id + '">编辑</button> ' +
+              '<button class="btn btn-mini danger" data-del="' + e.id + '">删除</button>' +
+            '</td></tr>';
+        }).join('');
+      }
+      var size = parseInt($('q_size').value,10) || 10;
+      var pages = Math.max(1, Math.ceil(total/size));
+      $('pageInfo').textContent = '共 ' + total + ' 条 · 第 ' + pageNo + '/' + pages + ' 页';
+      $('btnPrev').disabled = pageNo <= 1;
+      $('btnNext').disabled = pageNo >= pages;
+    });
+  }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
+
+  $('btnQuery').addEventListener('click', function(){ pageNo = 1; load(); });
+  $('btnReset').addEventListener('click', function(){
+    $('q_keyword').value=''; $('q_dept').value=''; $('q_active').value=''; $('q_size').value='10';
+    pageNo = 1; load();
+  });
+  $('btnPrev').addEventListener('click', function(){ if (pageNo>1){ pageNo--; load(); } });
+  $('btnNext').addEventListener('click', function(){ pageNo++; load(); });
+
+  $('rows').addEventListener('click', function(ev){
+    var t = ev.target;
+    if (!t || !t.dataset) return;
+    if (t.dataset.del){ del(t.dataset.del); }
+  });
+
+  // ---- create / edit ----
+  $('btnNew').addEventListener('click', function(){
+    if (!token){ toast('请先登录', true); return; }
+    editingId = null; $('dlgTitle').textContent = '新增员工';
+    ['f_name','f_dept','f_pos','f_email','f_phone','f_salary','f_hire'].forEach(function(id){ $(id).value=''; });
+    $('f_active').value = 'true';
+    $('dlg').showModal();
+  });
+
+  document.addEventListener('click', function(ev){
+    var t = ev.target;
+    if (t && t.dataset && t.dataset.edit){
+      var id = t.dataset.edit;
+      api('GET','/api/employees/' + id).then(function(res){
+        var e = res.data && res.data.data; if (!e) return;
+        editingId = e.id; $('dlgTitle').textContent = '编辑员工 #' + e.id;
+        $('f_name').value = e.name || '';
+        $('f_dept').value = e.department || '';
+        $('f_pos').value = e.position || '';
+        $('f_email').value = e.email || '';
+        $('f_phone').value = e.phone || '';
+        $('f_salary').value = e.salary != null ? e.salary : '';
+        $('f_hire').value = e.hireDate || '';
+        $('f_active').value = String(e.active !== false);
+        $('dlg').showModal();
+      });
+    }
+  });
+
+  $('dlgForm').addEventListener('submit', function(){});
+  $('dlg').addEventListener('close', function(){
+    if ($('dlg').returnValue !== 'ok') return;
+    var payload = {
+      name: $('f_name').value.trim(),
+      department: $('f_dept').value.trim(),
+      position: $('f_pos').value.trim() || null,
+      email: $('f_email').value.trim() || null,
+      phone: $('f_phone').value.trim() || null,
+      salary: $('f_salary').value === '' ? null : Number($('f_salary').value),
+      hireDate: $('f_hire').value || null,
+      active: $('f_active').value === 'true'
+    };
+    if (!payload.name || !payload.department){ toast('姓名和部门必填', true); return; }
+    var req = editingId
+      ? api('PUT','/api/employees/' + editingId, payload)
+      : api('POST','/api/employees', payload);
+    req.then(function(res){
+      var b = res.data;
+      if (b && b.code === 0){ toast(editingId ? '已保存' : '已新增'); load(); }
+      else { toast((b && b.message) || '保存失败', true); }
+    });
+  });
+
+  function del(id){
+    if (!confirm('确认删除员工 #' + id + '？')) return;
+    api('DELETE','/api/employees/' + id).then(function(res){
+      if (res.status === 200){ toast('已删除'); load(); }
+      else if (res.status === 403){ toast('权限不足：删除仅限 ADMIN', true); }
+      else { toast('删除失败', true); }
+    });
+  }
+})();
+</script>
+</body>
+</html>
